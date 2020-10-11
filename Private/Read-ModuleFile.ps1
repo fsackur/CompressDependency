@@ -21,7 +21,7 @@ function Read-ModuleFile
                 }
                 else
                 {
-                    Join-Path $PWD $Path
+                    Resolve-Path (Join-Path $PWD $Path)
                 }
             }},
             'Bytes'
