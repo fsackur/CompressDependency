@@ -26,11 +26,30 @@ Describe Write-ModuleFile {
 
         $TestData | Write-ModuleFile
 
+        $Script:ExpectedFiles = Get-ChildItem (Join-Path $TestDataFolder ModulePath) -Recurse
+        $Script:WrittenFiles  = Get-ChildItem $ModulePath -Recurse
+
         It "Copies all files" {
 
-            $ExpectedFiles = Get-ChildItem (Join-Path $TestDataFolder ModulePath) -Name -Recurse
-            $WrittenFiles  = Get-ChildItem $ModulePath -Name -Recurse
-            Compare-Object $ExpectedFiles $WrittenFiles | Should -BeNullOrEmpty
+            Compare-Object $ExpectedFiles.Name $WrittenFiles.Name | Should -BeNullOrEmpty
+        }
+
+        It "Copies correctly" {
+
+            $ExpectedHashes = $ExpectedFiles | Get-FileHash | Select-Object -ExpandProperty Hash
+            $WrittenHashes  = $WrittenFiles  | Get-FileHash | Select-Object -ExpandProperty Hash
+            Compare-Object $ExpectedHashes $WrittenHashes | Should -BeNullOrEmpty
+        }
+
+        It "Imports module" {
+
+            Join-Path $ModulePath Dep1 | Import-Module -PassThru | Should -Not -BeNullOrEmpty
+        }
+
+        It "Runs binary" {
+
+            $BinaryPath = Join-Path $ModulePath 'curl.exe'
+            (& $BinaryPath --version) -match 'curl 7.55.1' | Should -Not -BeNullOrEmpty
         }
     }
 
