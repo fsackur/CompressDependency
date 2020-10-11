@@ -3,4 +3,4 @@ ModulePath
 OutputPath
 
 # But we need the test data
-!Tests/**/ModulePath
+!Tests/Data/**
