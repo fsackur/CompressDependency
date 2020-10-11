@@ -11,11 +11,29 @@ function Write-ModuleFile
         [string]$Path,
 
         [Parameter(Mandatory, ValueFromPipelineByPropertyName)]
-        [string]$Bytes
+        [string]$Bytes,
+
+        [Parameter()]
+        [string]$OutputFolder = $PWD.Path
     )
+
+    begin
+    {
+        if (-not [IO.Path]::IsPathRooted($OutputFolder))
+        {
+            $OutputFolder = Join-Path $PWD $OutputFolder
+        }
+    }
+
 
     process
     {
+        if (-not [IO.Path]::IsPathRooted($Path))
+        {
+            $Path = Join-Path $OutputFolder $Path
+        }
+
+
         $Container = Split-Path $Path
         if (-not (Test-Path $Container -PathType Container))
         {
