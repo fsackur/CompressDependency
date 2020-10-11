@@ -10,7 +10,10 @@ Describe Read-ModuleFile {
     $Script:ModulePath = Join-Path $TestDrive ModulePath
     $null = New-Item $ModulePath -ItemType Directory
 
-    Get-ChildItem (Join-Path $PSScriptRoot 'Data') |
+    $PSScriptRoot |
+        Join-Path -ChildPath 'Data' |
+        Join-Path -ChildPath 'ModulePath' |
+        Get-ChildItem |
         Copy-Item -Destination $ModulePath -Recurse
 
     Push-Location $TestDrive
