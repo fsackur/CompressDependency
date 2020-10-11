@@ -40,6 +40,16 @@ function Read-ModuleFile
         $FullPath = $Resolved.Path
 
 
+        if (Test-Path $FullPath -PathType Container)
+        {
+            Write-Verbose "Skipping '$Fullpath' because it is a directory."
+            return
+        }
+
+
+        $Path = $FullPath -replace $RelativePattern
+
+
         $Output = 1 | Select-Object (
             'Path',
             'Bytes'

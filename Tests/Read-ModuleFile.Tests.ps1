@@ -3,7 +3,7 @@
 
 Describe Read-ModuleFile {
 
-    $TestDrive = $env:TEMP |
+    $Script:TestDrive = $env:TEMP |
         Join-Path -ChildPath ($Module.Name + '.Test') |
         Join-Path -ChildPath (Get-Random -Minimum 10000000 -Maximum 99999999)
 
@@ -21,32 +21,55 @@ Describe Read-ModuleFile {
 
     Context Default {
 
-        $Script:Output = 'ModulePath', 'ModulePath\Dep1\Dep1.psd1', '.\ModulePath\curl.exe' |
-            Read-ModuleFile -ErrorVariable Script:ErrorOutput -ErrorAction SilentlyContinue
+        # $Script:Output = 'ModulePath\Dep1\Dep1.psd1', '.\ModulePath\curl.exe' | Read-ModuleFile
 
-        It 'Errors on directories' {
+        $Script:TestPaths = (
+            'ModulePath\Dep1\Dep1.psd1',
+            '.\ModulePath\Dep1\Dep1.psd1',
+            (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
+        )
 
-            $ErrorOutput[0] | Should -Match "Path 'ModulePath' is not a file."
+
+        It "Resolves paths nicely" {
+
+            (
+                'ModulePath\Dep1\Dep1.psd1',
+                '.\ModulePath\Dep1\Dep1.psd1',
+                (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
+            ) |
+                Read-ModuleFile |
+                Select-Object -ExpandProperty Path -Unique |
+                Should -BeExactly "ModulePath\Dep1\Dep1.psd1"
         }
 
-        It "Doesn't error on anything else" {
+        It "Accepts a relative base path" {
 
-            $ErrorOutput.Count | Should -Be 1
+            (
+                'Dep1\Dep1.psd1',
+                '.\Dep1\Dep1.psd1',
+                (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
+            ) |
+                Read-ModuleFile -RelativeTo ModulePath |
+                Select-Object -ExpandProperty Path -Unique |
+                Should -BeExactly "Dep1\Dep1.psd1"
         }
 
-        It "Resolves non-dotted path" {
+        It "Accepts an absolute base path" {
 
-            $Output[0].Path | Should -BeExactly "$ModulePath\Dep1\Dep1.psd1"
-        }
-
-        It "Resolves dotted path" {
-
-            $Output[1].Path | Should -BeExactly "$ModulePath\curl.exe"
+            (
+                'Dep1\Dep1.psd1',
+                '.\Dep1\Dep1.psd1',
+                (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
+            ) |
+                Read-ModuleFile -RelativeTo (Resolve-Path ModulePath).Path |
+                Select-Object -ExpandProperty Path -Unique |
+                Should -BeExactly "Dep1\Dep1.psd1"
         }
 
         It "Reads .psd1 bytes" {
 
-            $Bytes = $Output[0].Bytes
+            $Output = 'ModulePath\Dep1\Dep1.psd1' | Read-ModuleFile
+            $Bytes = $Output.Bytes
             $Bytes.Length | Should -BeExactly 240
             $Bytes.Substring(0, 10) | Should -BeExactly 'QHsNCiAgIC'
             $Bytes.Substring($Bytes.Length - 10) | Should -BeExactly 'AwJw0KfQ0K'
@@ -54,14 +77,45 @@ Describe Read-ModuleFile {
 
         It "Reads .exe bytes" {
 
-            $Bytes = $Output[1].Bytes
+            $Output = 'curl.exe' | Read-ModuleFile -RelativeTo ModulePath
+            $Bytes = $Output.Bytes
             $Bytes.Length | Should -BeExactly 561836
             $Bytes.Substring(0, 10) | Should -BeExactly 'TVqQAAMAAA'
             $Bytes.Substring($Bytes.Length - 10) | Should -BeExactly 'AAAAAAAAA='
         }
+
+        It "Skips directories" {
+
+            $Output = 'ModulePath' | Read-ModuleFile
+            $Output | Should -BeNullOrEmpty
+        }
+
+        $Script:FooErrorMessage = "Cannot find path '$PWD\foo' because it does not exist."
+
+        It "Errors on non-existent relative path" {
+
+            {'foo' | Read-ModuleFile -ErrorAction Stop} | Should -Throw $FooErrorMessage
+        }
+
+        It "Errors on non-existent absolute path" {
+
+            {"$PWD\foo" | Read-ModuleFile -ErrorAction Stop} | Should -Throw $FooErrorMessage
+        }
+
+        It "Errors on non-existent relative base path" {
+
+            {'ModulePath\Dep1\Dep1.psd1' | Read-ModuleFile -RelativeTo 'foo' -ErrorAction Stop} | Should -Throw $FooErrorMessage
+        }
+
+        It "Errors on non-existent absolute base path" {
+
+            {'ModulePath\Dep1\Dep1.psd1' | Read-ModuleFile -RelativeTo "$PWD\foo" -ErrorAction Stop} | Should -Throw $FooErrorMessage
+        }
     }
 
 
-    Pop-Location
-    Remove-Item $TestDrive -Recurse -Force
+    AfterAll {
+        Pop-Location
+        Remove-Item $Script:TestDrive -Recurse -Force
+    }
 }
