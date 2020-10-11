@@ -16,15 +16,30 @@ Describe Write-ModuleFile {
         Join-Path -ChildPath Compressed.ps1
 
     $Script:TestData = . $TestDataFile
-    $TestData | ForEach-Object {
-        $_.Path = $_.Path -replace [regex]::Escape($TestDataFolder), $TestDrive
-    }
+
+    Push-Location $TestDrive
 
 
 
     Context Default {
 
-        $TestData | Write-ModuleFile
+        It "Defaults to current working directory" {
+            
+            $TestData[-1] | Write-ModuleFile
+            Test-Path $TestData[-1].Path | Should -Be $true
+            Remove-Item (Split-Path $TestData[-1].Path) -Recurse -Force
+        }
+
+        It "Respects absolute paths" {
+            
+            $Path = Join-Path $PWD foo
+            Write-ModuleFile -Bytes $TestData[1].Bytes -Path $Path
+            Test-Path $Path | Should -Be $true
+            Remove-Item $Path
+        }
+
+        
+        $TestData | Write-ModuleFile -OutputFolder ModulePath
 
         $Script:ExpectedFiles = Get-ChildItem (Join-Path $TestDataFolder ModulePath) -Recurse
         $Script:WrittenFiles  = Get-ChildItem $ModulePath -Recurse
