@@ -3,11 +3,11 @@
 
 Describe Write-ModuleFile {
 
-    $Script:TestDrive2 = $env:TEMP |
+    $Script:TestDrive = $env:TEMP |
         Join-Path -ChildPath ($Module.Name + '.Test') |
         Join-Path -ChildPath (Get-Random -Minimum 10000000 -Maximum 99999999)
 
-    $Script:ModulePath = Join-Path $TestDrive2 ModulePath
+    $Script:ModulePath = Join-Path $TestDrive ModulePath
     $null = New-Item $ModulePath -ItemType Directory
 
     $Script:TestDataFolder = Join-Path $PSScriptRoot Data
@@ -17,7 +17,7 @@ Describe Write-ModuleFile {
 
     $Script:TestData = . $TestDataFile
     $TestData | ForEach-Object {
-        $_.Path = $_.Path -replace [regex]::Escape($TestDataFolder), $TestDrive2
+        $_.Path = $_.Path -replace [regex]::Escape($TestDataFolder), $TestDrive
     }
 
 
@@ -56,6 +56,6 @@ Describe Write-ModuleFile {
 
     AfterAll {
         Pop-Location
-        Remove-Item $Script:TestDrive2 -Recurse -Force
+        Remove-Item $Script:TestDrive -Recurse -Force
     }
 }
