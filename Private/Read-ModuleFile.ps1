@@ -29,12 +29,18 @@ function Read-ModuleFile
         if (-not [IO.Path]::IsPathRooted($Path))
         {
             $FullPath = Join-Path $RelativeTo $Path
-            $FullPath = (Resolve-Path $FullPath -ErrorAction Stop).Path
+
+            $FullPath = Resolve-Path $FullPath
+            if (-not $?) {return}
+            $FullPath = $FullPath.Path
+
             $Path     = $FullPath -replace $RelativePattern
         }
         else
         {
-            $FullPath = (Resolve-Path $Path -ErrorAction Stop).Path
+            $FullPath = Resolve-Path $Path -ErrorAction Stop
+            if (-not $?) {return}
+            $FullPath = $FullPath.Path
         }
 
 
