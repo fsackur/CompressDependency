@@ -4,8 +4,8 @@ function Read-ModuleFile
         .SYNOPSIS
         Get metadata and content of a file.
 
-        .PARAMETER RelativeTo
-        Provide a path within which to search for files. Has no effect on absolute paths.
+        .PARAMETER BasePath
+        Provide a path within which to resolve relative paths. Has no effect on absolute paths.
     #>
     [CmdletBinding()]
     param
@@ -14,13 +14,13 @@ function Read-ModuleFile
         [string]$Path,
 
         [Parameter()]
-        [string]$RelativeTo = $PWD.Path
+        [string]$BasePath = $PWD.Path
     )
 
     begin
     {
-        $RelativeTo      = Resolve-Path $RelativeTo -ErrorAction Stop
-        $RelativePattern = [regex]::Escape($RelativeTo) + [regex]::Escape([IO.Path]::DirectorySeparatorChar)
+        $BasePath        = Resolve-Path $BasePath -ErrorAction Stop
+        $RelativePattern = [regex]::Escape($BasePath) + [regex]::Escape([IO.Path]::DirectorySeparatorChar)
     }
 
 
@@ -28,7 +28,7 @@ function Read-ModuleFile
     {
         if (-not [IO.Path]::IsPathRooted($Path))
         {
-            $FullPath = Join-Path $RelativeTo $Path
+            $FullPath = Join-Path $BasePath $Path
         }
         else
         {

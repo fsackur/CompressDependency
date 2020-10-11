@@ -49,7 +49,7 @@ Describe Read-ModuleFile {
                 '.\Dep1\Dep1.psd1',
                 (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
             ) |
-                Read-ModuleFile -RelativeTo ModulePath |
+                Read-ModuleFile -BasePath ModulePath |
                 Select-Object -ExpandProperty Path -Unique |
                 Should -BeExactly "Dep1\Dep1.psd1"
         }
@@ -61,7 +61,7 @@ Describe Read-ModuleFile {
                 '.\Dep1\Dep1.psd1',
                 (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
             ) |
-                Read-ModuleFile -RelativeTo (Resolve-Path ModulePath).Path |
+                Read-ModuleFile -BasePath (Resolve-Path ModulePath).Path |
                 Select-Object -ExpandProperty Path -Unique |
                 Should -BeExactly "Dep1\Dep1.psd1"
         }
@@ -77,7 +77,7 @@ Describe Read-ModuleFile {
 
         It "Reads .exe bytes" {
 
-            $Output = 'curl.exe' | Read-ModuleFile -RelativeTo ModulePath
+            $Output = 'curl.exe' | Read-ModuleFile -BasePath ModulePath
             $Bytes = $Output.Bytes
             $Bytes.Length | Should -BeExactly 561836
             $Bytes.Substring(0, 10) | Should -BeExactly 'TVqQAAMAAA'
@@ -104,12 +104,12 @@ Describe Read-ModuleFile {
 
         It "Errors on non-existent relative base path" {
 
-            {'ModulePath\Dep1\Dep1.psd1' | Read-ModuleFile -RelativeTo 'foo' -ErrorAction Stop} | Should -Throw $FooErrorMessage
+            {'ModulePath\Dep1\Dep1.psd1' | Read-ModuleFile -BasePath 'foo' -ErrorAction Stop} | Should -Throw $FooErrorMessage
         }
 
         It "Errors on non-existent absolute base path" {
 
-            {'ModulePath\Dep1\Dep1.psd1' | Read-ModuleFile -RelativeTo "$PWD\foo" -ErrorAction Stop} | Should -Throw $FooErrorMessage
+            {'ModulePath\Dep1\Dep1.psd1' | Read-ModuleFile -BasePath "$PWD\foo" -ErrorAction Stop} | Should -Throw $FooErrorMessage
         }
     }
 
