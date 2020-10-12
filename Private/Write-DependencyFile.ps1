@@ -1,4 +1,4 @@
-function Write-ModuleFile
+function Write-DependencyFile
 {
     <#
         .SYNOPSIS

@@ -1,7 +1,7 @@
 . (Join-Path $PSScriptRoot Test.Setup.ps1)
 
 
-Describe Write-ModuleFile {
+Describe Write-DependencyFile {
 
     $Script:TestDrive = $env:TEMP |
         Join-Path -ChildPath ($Module.Name + '.Test') |
@@ -24,22 +24,22 @@ Describe Write-ModuleFile {
     Context Default {
 
         It "Defaults to current working directory" {
-            
-            $TestData[-1] | Write-ModuleFile
+
+            $TestData[-1] | Write-DependencyFile
             Test-Path $TestData[-1].Path | Should -Be $true
             Remove-Item (Split-Path $TestData[-1].Path) -Recurse -Force
         }
 
         It "Respects absolute paths" {
-            
+
             $Path = Join-Path $PWD foo
-            Write-ModuleFile -Bytes $TestData[1].Bytes -Path $Path
+            Write-DependencyFile -Bytes $TestData[1].Bytes -Path $Path
             Test-Path $Path | Should -Be $true
             Remove-Item $Path
         }
 
-        
-        $TestData | Write-ModuleFile -OutputFolder ModulePath
+
+        $TestData | Write-DependencyFile -OutputFolder ModulePath
 
         $Script:ExpectedFiles = Get-ChildItem (Join-Path $TestDataFolder ModulePath) -Recurse
         $Script:WrittenFiles  = Get-ChildItem $ModulePath -Recurse
