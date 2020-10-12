@@ -1,4 +1,4 @@
-function Read-ModuleFile
+function Read-DependencyFile
 {
     <#
         .SYNOPSIS

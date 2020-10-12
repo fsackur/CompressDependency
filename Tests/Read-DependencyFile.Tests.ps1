@@ -1,7 +1,7 @@
 . (Join-Path $PSScriptRoot Test.Setup.ps1)
 
 
-Describe Read-ModuleFile {
+Describe Read-DependencyFile {
 
     $Script:TestDrive = $env:TEMP |
         Join-Path -ChildPath ($Module.Name + '.Test') |
@@ -21,8 +21,6 @@ Describe Read-ModuleFile {
 
     Context Default {
 
-        # $Script:Output = 'ModulePath\Dep1\Dep1.psd1', '.\ModulePath\curl.exe' | Read-ModuleFile
-
         $Script:TestPaths = (
             'ModulePath\Dep1\Dep1.psd1',
             '.\ModulePath\Dep1\Dep1.psd1',
@@ -37,7 +35,7 @@ Describe Read-ModuleFile {
                 '.\ModulePath\Dep1\Dep1.psd1',
                 (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
             ) |
-                Read-ModuleFile |
+                Read-DependencyFile |
                 Select-Object -ExpandProperty Path -Unique |
                 Should -BeExactly "ModulePath\Dep1\Dep1.psd1"
         }
@@ -49,7 +47,7 @@ Describe Read-ModuleFile {
                 '.\Dep1\Dep1.psd1',
                 (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
             ) |
-                Read-ModuleFile -BasePath ModulePath |
+                Read-DependencyFile -BasePath ModulePath |
                 Select-Object -ExpandProperty Path -Unique |
                 Should -BeExactly "Dep1\Dep1.psd1"
         }
@@ -61,14 +59,14 @@ Describe Read-ModuleFile {
                 '.\Dep1\Dep1.psd1',
                 (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
             ) |
-                Read-ModuleFile -BasePath (Resolve-Path ModulePath).Path |
+                Read-DependencyFile -BasePath (Resolve-Path ModulePath).Path |
                 Select-Object -ExpandProperty Path -Unique |
                 Should -BeExactly "Dep1\Dep1.psd1"
         }
 
         It "Reads .psd1 bytes" {
 
-            $Output = 'ModulePath\Dep1\Dep1.psd1' | Read-ModuleFile
+            $Output = 'ModulePath\Dep1\Dep1.psd1' | Read-DependencyFile
             $Bytes = $Output.Bytes
             $Bytes.Length | Should -BeExactly 240
             $Bytes.Substring(0, 10) | Should -BeExactly 'QHsNCiAgIC'
@@ -77,7 +75,7 @@ Describe Read-ModuleFile {
 
         It "Reads .exe bytes" {
 
-            $Output = 'curl.exe' | Read-ModuleFile -BasePath ModulePath
+            $Output = 'curl.exe' | Read-DependencyFile -BasePath ModulePath
             $Bytes = $Output.Bytes
             $Bytes.Length | Should -BeExactly 561836
             $Bytes.Substring(0, 10) | Should -BeExactly 'TVqQAAMAAA'
@@ -86,7 +84,7 @@ Describe Read-ModuleFile {
 
         It "Skips directories" {
 
-            $Output = 'ModulePath' | Read-ModuleFile
+            $Output = 'ModulePath' | Read-DependencyFile
             $Output | Should -BeNullOrEmpty
         }
 
@@ -94,22 +92,22 @@ Describe Read-ModuleFile {
 
         It "Errors on non-existent relative path" {
 
-            {'foo' | Read-ModuleFile -ErrorAction Stop} | Should -Throw $FooErrorMessage
+            {'foo' | Read-DependencyFile -ErrorAction Stop} | Should -Throw $FooErrorMessage
         }
 
         It "Errors on non-existent absolute path" {
 
-            {"$PWD\foo" | Read-ModuleFile -ErrorAction Stop} | Should -Throw $FooErrorMessage
+            {"$PWD\foo" | Read-DependencyFile -ErrorAction Stop} | Should -Throw $FooErrorMessage
         }
 
         It "Errors on non-existent relative base path" {
 
-            {'ModulePath\Dep1\Dep1.psd1' | Read-ModuleFile -BasePath 'foo' -ErrorAction Stop} | Should -Throw $FooErrorMessage
+            {'ModulePath\Dep1\Dep1.psd1' | Read-DependencyFile -BasePath 'foo' -ErrorAction Stop} | Should -Throw $FooErrorMessage
         }
 
         It "Errors on non-existent absolute base path" {
 
-            {'ModulePath\Dep1\Dep1.psd1' | Read-ModuleFile -BasePath "$PWD\foo" -ErrorAction Stop} | Should -Throw $FooErrorMessage
+            {'ModulePath\Dep1\Dep1.psd1' | Read-DependencyFile -BasePath "$PWD\foo" -ErrorAction Stop} | Should -Throw $FooErrorMessage
         }
     }
 

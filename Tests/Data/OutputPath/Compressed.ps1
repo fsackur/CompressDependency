@@ -1,7 +1,7 @@
 <#
 Get-ChildItem .\Tests\Data\ModulePath -Recurse -File |
     Select-Object -ExpandProperty FullName -Last 1 |
-    Read-ModuleFile |
+    Read-DependencyFile |
     ForEach-Object {
         "@{",
         "    Path = '$($_.Path)'",
