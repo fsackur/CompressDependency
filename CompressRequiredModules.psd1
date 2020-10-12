@@ -12,7 +12,7 @@
     RequiredModules   = @()
 
     FunctionsToExport = @(
-        '*'
+        'Compress-Dependency'
     )
 
     PrivateData       = @{
