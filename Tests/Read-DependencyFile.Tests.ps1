@@ -21,93 +21,96 @@ Describe Read-DependencyFile {
 
     Context Default {
 
-        $Script:TestPaths = (
-            'ModulePath\Dep1\Dep1.psd1',
-            '.\ModulePath\Dep1\Dep1.psd1',
-            (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
-        )
+        InModuleScope $Module {
 
-
-        It "Resolves paths nicely" {
-
-            (
+            $Script:TestPaths = (
                 'ModulePath\Dep1\Dep1.psd1',
                 '.\ModulePath\Dep1\Dep1.psd1',
                 (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
-            ) |
-                Read-DependencyFile |
-                Select-Object -ExpandProperty Path -Unique |
-                Should -BeExactly "ModulePath\Dep1\Dep1.psd1"
-        }
+            )
 
-        It "Accepts a relative base path" {
 
-            (
-                'Dep1\Dep1.psd1',
-                '.\Dep1\Dep1.psd1',
-                (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
-            ) |
-                Read-DependencyFile -BasePath ModulePath |
-                Select-Object -ExpandProperty Path -Unique |
-                Should -BeExactly "Dep1\Dep1.psd1"
-        }
+            It "Resolves paths nicely" {
 
-        It "Accepts an absolute base path" {
+                (
+                    'ModulePath\Dep1\Dep1.psd1',
+                    '.\ModulePath\Dep1\Dep1.psd1',
+                    (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
+                ) |
+                    Read-DependencyFile |
+                    Select-Object -ExpandProperty Path -Unique |
+                    Should -BeExactly "ModulePath\Dep1\Dep1.psd1"
+            }
 
-            (
-                'Dep1\Dep1.psd1',
-                '.\Dep1\Dep1.psd1',
-                (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
-            ) |
-                Read-DependencyFile -BasePath (Resolve-Path ModulePath).Path |
-                Select-Object -ExpandProperty Path -Unique |
-                Should -BeExactly "Dep1\Dep1.psd1"
-        }
+            It "Accepts a relative base path" {
 
-        It "Reads .psd1 bytes" {
+                (
+                    'Dep1\Dep1.psd1',
+                    '.\Dep1\Dep1.psd1',
+                    (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
+                ) |
+                    Read-DependencyFile -BasePath ModulePath |
+                    Select-Object -ExpandProperty Path -Unique |
+                    Should -BeExactly "Dep1\Dep1.psd1"
+            }
 
-            $Output = 'ModulePath\Dep1\Dep1.psd1' | Read-DependencyFile
-            $Bytes = $Output.Bytes
-            $Bytes.Length | Should -BeExactly 240
-            $Bytes.Substring(0, 10) | Should -BeExactly 'QHsNCiAgIC'
-            $Bytes.Substring($Bytes.Length - 10) | Should -BeExactly 'AwJw0KfQ0K'
-        }
+            It "Accepts an absolute base path" {
 
-        It "Reads .exe bytes" {
+                (
+                    'Dep1\Dep1.psd1',
+                    '.\Dep1\Dep1.psd1',
+                    (Join-Path $PWD 'ModulePath\Dep1\Dep1.psd1')
+                ) |
+                    Read-DependencyFile -BasePath (Resolve-Path ModulePath).Path |
+                    Select-Object -ExpandProperty Path -Unique |
+                    Should -BeExactly "Dep1\Dep1.psd1"
+            }
 
-            $Output = 'curl.exe' | Read-DependencyFile -BasePath ModulePath
-            $Bytes = $Output.Bytes
-            $Bytes.Length | Should -BeExactly 561836
-            $Bytes.Substring(0, 10) | Should -BeExactly 'TVqQAAMAAA'
-            $Bytes.Substring($Bytes.Length - 10) | Should -BeExactly 'AAAAAAAAA='
-        }
+            It "Reads .psd1 bytes" {
 
-        It "Skips directories" {
+                $Output = 'ModulePath\Dep1\Dep1.psd1' | Read-DependencyFile
+                $Bytes = $Output.Bytes
+                $Bytes.Length | Should -BeExactly 240
+                $Bytes.Substring(0, 10) | Should -BeExactly 'QHsNCiAgIC'
+                $Bytes.Substring($Bytes.Length - 10) | Should -BeExactly 'AwJw0KfQ0K'
+            }
 
-            $Output = 'ModulePath' | Read-DependencyFile
-            $Output | Should -BeNullOrEmpty
-        }
+            It "Reads .exe bytes" {
 
-        $Script:FooErrorMessage = "Cannot find path '$PWD\foo' because it does not exist."
+                $Output = 'curl.exe' | Read-DependencyFile -BasePath ModulePath
+                $Bytes = $Output.Bytes
+                $Bytes.Length | Should -BeExactly 561836
+                $Bytes.Substring(0, 10) | Should -BeExactly 'TVqQAAMAAA'
+                $Bytes.Substring($Bytes.Length - 10) | Should -BeExactly 'AAAAAAAAA='
+            }
 
-        It "Errors on non-existent relative path" {
+            It "Skips directories" {
 
-            {'foo' | Read-DependencyFile -ErrorAction Stop} | Should -Throw $FooErrorMessage
-        }
+                $Output = 'ModulePath' | Read-DependencyFile
+                $Output | Should -BeNullOrEmpty
+            }
 
-        It "Errors on non-existent absolute path" {
+            $Script:FooErrorMessage = "Cannot find path '$PWD\foo' because it does not exist."
 
-            {"$PWD\foo" | Read-DependencyFile -ErrorAction Stop} | Should -Throw $FooErrorMessage
-        }
+            It "Errors on non-existent relative path" {
 
-        It "Errors on non-existent relative base path" {
+                {'foo' | Read-DependencyFile -ErrorAction Stop} | Should -Throw $FooErrorMessage
+            }
 
-            {'ModulePath\Dep1\Dep1.psd1' | Read-DependencyFile -BasePath 'foo' -ErrorAction Stop} | Should -Throw $FooErrorMessage
-        }
+            It "Errors on non-existent absolute path" {
 
-        It "Errors on non-existent absolute base path" {
+                {"$PWD\foo" | Read-DependencyFile -ErrorAction Stop} | Should -Throw $FooErrorMessage
+            }
 
-            {'ModulePath\Dep1\Dep1.psd1' | Read-DependencyFile -BasePath "$PWD\foo" -ErrorAction Stop} | Should -Throw $FooErrorMessage
+            It "Errors on non-existent relative base path" {
+
+                {'ModulePath\Dep1\Dep1.psd1' | Read-DependencyFile -BasePath 'foo' -ErrorAction Stop} | Should -Throw $FooErrorMessage
+            }
+
+            It "Errors on non-existent absolute base path" {
+
+                {'ModulePath\Dep1\Dep1.psd1' | Read-DependencyFile -BasePath "$PWD\foo" -ErrorAction Stop} | Should -Throw $FooErrorMessage
+            }
         }
     }
 

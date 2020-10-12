@@ -23,48 +23,51 @@ Describe Write-DependencyFile {
 
     Context Default {
 
-        It "Defaults to current working directory" {
+        InModuleScope $Module {
 
-            $TestData[-1] | Write-DependencyFile
-            Test-Path $TestData[-1].Path | Should -Be $true
-            Remove-Item (Split-Path $TestData[-1].Path) -Recurse -Force
-        }
+            It "Defaults to current working directory" {
 
-        It "Respects absolute paths" {
+                $TestData[-1] | Write-DependencyFile
+                Test-Path $TestData[-1].Path | Should -Be $true
+                Remove-Item (Split-Path $TestData[-1].Path) -Recurse -Force
+            }
 
-            $Path = Join-Path $PWD foo
-            Write-DependencyFile -Bytes $TestData[1].Bytes -Path $Path
-            Test-Path $Path | Should -Be $true
-            Remove-Item $Path
-        }
+            It "Respects absolute paths" {
+
+                $Path = Join-Path $PWD foo
+                Write-DependencyFile -Bytes $TestData[1].Bytes -Path $Path
+                Test-Path $Path | Should -Be $true
+                Remove-Item $Path
+            }
 
 
-        $TestData | Write-DependencyFile -OutputFolder ModulePath
+            $TestData | Write-DependencyFile -OutputFolder ModulePath
 
-        $Script:ExpectedFiles = Get-ChildItem (Join-Path $TestDataFolder ModulePath) -Recurse
-        $Script:WrittenFiles  = Get-ChildItem $ModulePath -Recurse
+            $Script:ExpectedFiles = Get-ChildItem (Join-Path $TestDataFolder ModulePath) -Recurse
+            $Script:WrittenFiles  = Get-ChildItem $ModulePath -Recurse
 
-        It "Copies all files" {
+            It "Copies all files" {
 
-            Compare-Object $ExpectedFiles.Name $WrittenFiles.Name | Should -BeNullOrEmpty
-        }
+                Compare-Object $ExpectedFiles.Name $WrittenFiles.Name | Should -BeNullOrEmpty
+            }
 
-        It "Copies correctly" {
+            It "Copies correctly" {
 
-            $ExpectedHashes = $ExpectedFiles | Get-FileHash | Select-Object -ExpandProperty Hash
-            $WrittenHashes  = $WrittenFiles  | Get-FileHash | Select-Object -ExpandProperty Hash
-            Compare-Object $ExpectedHashes $WrittenHashes | Should -BeNullOrEmpty
-        }
+                $ExpectedHashes = $ExpectedFiles | Get-FileHash | Select-Object -ExpandProperty Hash
+                $WrittenHashes  = $WrittenFiles  | Get-FileHash | Select-Object -ExpandProperty Hash
+                Compare-Object $ExpectedHashes $WrittenHashes | Should -BeNullOrEmpty
+            }
 
-        It "Imports module" {
+            It "Imports module" {
 
-            Join-Path $ModulePath Dep1 | Import-Module -PassThru | Should -Not -BeNullOrEmpty
-        }
+                Join-Path $ModulePath Dep1 | Import-Module -PassThru | Should -Not -BeNullOrEmpty
+            }
 
-        It "Runs binary" {
+            It "Runs binary" {
 
-            $BinaryPath = Join-Path $ModulePath 'curl.exe'
-            (& $BinaryPath --version) -match 'curl 7.55.1' | Should -Not -BeNullOrEmpty
+                $BinaryPath = Join-Path $ModulePath 'curl.exe'
+                (& $BinaryPath --version) -match 'curl 7.55.1' | Should -Not -BeNullOrEmpty
+            }
         }
     }
 
