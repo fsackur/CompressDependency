@@ -1,5 +1,5 @@
 @{
-    Description       = 'Package dependency modules into a single .ps1 and reinflate them like a self-extracting zip!'
+    Description       = 'Like a self-extracting zip, but in a .ps1 script!'
     ModuleToProcess   = 'CompressDependency.psm1'
     ModuleVersion     = '0.0.1'
     GUID              = 'ecdcdd30-fc42-4306-8b6c-f657e680acdc'
