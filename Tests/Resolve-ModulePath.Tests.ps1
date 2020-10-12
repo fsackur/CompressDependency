@@ -6,7 +6,7 @@ Describe "Resolve-ModulePath" {
 
         BeforeAll {
             Mock Get-Module -ModuleName $Module -ParameterFilter {$FullyQualifiedName.Name -eq 'ImportedModule' -and -not $ListAvailable} {
-                return @{ModuleBase = 'foo'}
+                return @{ModuleBase = 'C:\Modules\foo\1.2.3'}
             }
 
             Mock Get-Module -ModuleName $Module -ParameterFilter {$FullyQualifiedName.Name -eq 'InstalledModule' -and -not $ListAvailable} {
@@ -18,7 +18,7 @@ Describe "Resolve-ModulePath" {
             }
 
             Mock Get-Module -ModuleName $Module -ParameterFilter {$FullyQualifiedName.Name -eq 'InstalledModule' -and $ListAvailable} {
-                return @{ModuleBase = 'foo'}
+                return @{ModuleBase = 'C:\Modules\foo\1.2.3'}
             }
 
             Mock Get-Module -ModuleName $Module -ParameterFilter {$FullyQualifiedName.Name -eq '.\InstalledModule'} {
@@ -26,7 +26,7 @@ Describe "Resolve-ModulePath" {
             }
 
             Mock Get-Module -ModuleName $Module -ParameterFilter {$FullyQualifiedName.Name -eq '.\InstalledModule' -and $ListAvailable} {
-                return @{ModuleBase = 'foo'}
+                return @{ModuleBase = 'C:\Modules\foo\1.2.3'}
             }
 
             Mock Get-Module -ModuleName $Module {
@@ -39,11 +39,13 @@ Describe "Resolve-ModulePath" {
 
             It "Finds imported modules by name or ModuleSpec" {
 
-                "ImportedModule" |
-                    Resolve-ModulePath | Should -BeExactly 'foo'
+                $Output = "ImportedModule" | Resolve-ModulePath
+                $Output.Path     | Should -BeExactly 'C:\Modules\foo\1.2.3'
+                $Output.BasePath | Should -BeExactly 'C:\Modules'
 
-                @{ModuleName = "ImportedModule"; ModuleVersion = "1.2.3"} |
-                    Resolve-ModulePath | Should -BeExactly 'foo'
+                @{ModuleName = "ImportedModule"; ModuleVersion = "1.2.3"} | Resolve-ModulePath
+                $Output.Path     | Should -BeExactly 'C:\Modules\foo\1.2.3'
+                $Output.BasePath | Should -BeExactly 'C:\Modules'
             }
 
             It "Does not search for imported modules" {
@@ -55,17 +57,36 @@ Describe "Resolve-ModulePath" {
 
             It "Finds installed modules by name or ModuleSpec" {
 
-                "InstalledModule" |
-                    Resolve-ModulePath | Should -BeExactly 'foo'
+                $Output = "InstalledModule" | Resolve-ModulePath
+                $Output.Path     | Should -BeExactly 'C:\Modules\foo\1.2.3'
+                $Output.BasePath | Should -BeExactly 'C:\Modules'
 
-                @{ModuleName = "InstalledModule"; ModuleVersion = "1.2.3"} |
-                    Resolve-ModulePath | Should -BeExactly 'foo'
+                $Output = @{ModuleName = "InstalledModule"; ModuleVersion = "1.2.3"} | Resolve-ModulePath
+                $Output.Path     | Should -BeExactly 'C:\Modules\foo\1.2.3'
+                $Output.BasePath | Should -BeExactly 'C:\Modules'
             }
 
             It "Finds installed modules by path" {
 
-                ".\InstalledModule" |
-                    Resolve-ModulePath | Should -BeExactly 'foo'
+                $Output = ".\InstalledModule" | Resolve-ModulePath
+                $Output.Path     | Should -BeExactly 'C:\Modules\foo\1.2.3'
+                $Output.BasePath | Should -BeExactly 'C:\Modules'
+            }
+
+            It "Resolves non-versioned modules" {
+
+                Mock Get-Module -ModuleName $Module -ParameterFilter {$FullyQualifiedName.Name -eq 'ImportedModule' -and -not $ListAvailable} {
+                    return @{ModuleBase = 'C:\Modules\foo'}
+                }
+
+                $Output = "ImportedModule" | Resolve-ModulePath
+                $Output.Path     | Should -BeExactly 'C:\Modules\foo'
+                $Output.BasePath | Should -BeExactly 'C:\Modules'
+            }
+
+            It "Errors on non-importable modules" {
+
+                {@{ModuleName = 'quux'; GUID = 'deadbeef-dead-beef-f00d-feeddeadbeef'} | Resolve-ModulePath -ErrorAction Stop} | Should -Throw
             }
         }
     }

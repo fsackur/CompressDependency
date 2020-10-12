@@ -17,9 +17,6 @@ function Resolve-ModulePath
         If a matching module is already imported in the current session, it is returned. Otherwise,
         the normal module resolution order is followed, and the highest matching version is
         returned.
-
-        .OUTPUTS
-        [string]
     #>
     [CmdletBinding()]
     param
@@ -27,6 +24,14 @@ function Resolve-ModulePath
         [Parameter(Mandatory, ValueFromPipeline)]
         [object[]]$Module
     )
+
+
+    begin
+    {
+        $VersionPattern = '\d+\.\d+\.\d+(\.\d+)?'
+        $VersionFolderPattern = [regex]::Escape([IO.Path]::DirectorySeparatorChar) + $VersionPattern + '$'
+    }
+
 
     process
     {
@@ -46,7 +51,7 @@ function Resolve-ModulePath
             if ($ResolvedModule)
             {
                 Write-Verbose "Found $($ResolvedModule.Name) $($ResolvedModule.Version) from the current session."
-                return $ResolvedModule.ModuleBase
+                return $ResolvedModule
             }
 
 
@@ -57,11 +62,20 @@ function Resolve-ModulePath
             if ($ResolvedModule)
             {
                 Write-Verbose "Found $($ResolvedModule.Name) $($ResolvedModule.Version) at '$($ResolvedModule.ModuleBase)'."
-                return $ResolvedModule.ModuleBase
+                return $ResolvedModule
             }
 
 
             Write-Error "'$_': not a Powershell module, or not in an importable location."
+
+
+        } | ForEach-Object {
+
+            $BasePath = Split-Path ($_.ModuleBase -replace $VersionFolderPattern)
+            [pscustomobject]@{
+                Path     = $_.ModuleBase
+                BasePath = $BasePath
+            }
         }
     }
 }
