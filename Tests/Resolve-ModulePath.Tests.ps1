@@ -37,6 +37,19 @@ Describe "Resolve-ModulePath" {
 
         InModuleScope $Module {
 
+            It "Works with PSModuleInfo" {
+                $TestModulePath = $PSScriptRoot |
+                    Join-Path -ChildPath Data |
+                    Join-Path -ChildPath ModulePath
+                $TestModuleBase = $TestModulePath |
+                    Join-Path -ChildPath Dep1
+
+                $TestModule = Import-Module $TestModuleBase -PassThru
+                $Output = $TestModule | Resolve-ModulePath
+                $Output.Path     | Should -BeExactly $TestModuleBase
+                $Output.BasePath | Should -BeExactly $TestModulePath
+            }
+
             It "Finds imported modules by name or ModuleSpec" {
 
                 $Output = "ImportedModule" | Resolve-ModulePath

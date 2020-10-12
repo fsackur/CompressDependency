@@ -37,14 +37,22 @@ function Resolve-ModulePath
     {
         $Module | ForEach-Object {
 
-            $Splat = @{
-                FullyQualifiedName = $_
+            if ($_ -is [psmoduleinfo])
+            {
+                return $_
             }
 
+
             $ResolvedModule = $null
+            $Splat = @{
+                FullyQualifiedName = $_
+                ErrorAction        = 'SilentlyContinue'
+            }
+
+
             try
             {
-                $ResolvedModule = Get-Module @Splat -ErrorAction SilentlyContinue | Select-Object -First 1
+                $ResolvedModule = Get-Module @Splat | Select-Object -First 1
             }
             catch {}
 
@@ -55,7 +63,7 @@ function Resolve-ModulePath
             }
 
 
-            $ResolvedModule = Get-Module @Splat -ListAvailable -Verbose:$false -ErrorAction SilentlyContinue |
+            $ResolvedModule = Get-Module @Splat -ListAvailable -Verbose:$false |
                 Sort-Object Version -Descending |
                 Select-Object -First 1
 
